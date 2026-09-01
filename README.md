@@ -43,9 +43,9 @@ well under Discord's own rate limit of two renames per ten minutes.
 
 | Stage | Range | Default name |
 |---|---|---|
-| 1 — Calm | 0–30 | `#штиль` |
-| 2 — Active | 31–70 | `#активное-общение` |
-| 3 — Chaotic | 71–100 | `#сущий-кошмар` |
+| 1 — Calm | 0–30 | `#🍵-calm` |
+| 2 — Active | 31–70 | `#⚡-active-discussion` |
+| 3 — Chaotic | 71–100 | `#💥-absolute-chaos` |
 
 Names are fully customizable per server via `/set_names`.
 </details>
