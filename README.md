@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" width="180" alt="Entropix logo">
+  <img src="assets/logo.png" style="max-width: 100%; height: auto;" alt="Entropix logo">
 </p>
 
 <h1 align="center">Entropix</h1>
