@@ -8,7 +8,10 @@ use crate::{Context, Error};
 /// Check the current Chaos Index right now.
 #[poise::command(slash_command, ephemeral, guild_only)]
 pub async fn status(ctx: Context<'_>) -> Result<(), Error> {
-    let guild_id = ctx.guild_id().unwrap().get() as i64;
+    let guild_id = ctx
+        .guild_id()
+        .ok_or_else(|| Error::from("Guild only command"))?
+        .get() as i64;
     let guild_config = config::get_or_create(&ctx.data().db, guild_id).await?;
 
     // TODO: compute the real index from the in-memory message-signal buffer
