@@ -1,0 +1,36 @@
+[package]
+name = "entropix"
+version = "0.1.0"
+edition = "2024"
+description = "A Discord bot that measures real-time chaos in a text channel and dynamically renames it based on the mood of the conversation."
+authors = [
+    "Devoid-Kun <223108906+Devoid-Kun@users.noreply.github.com>",
+    "NiZaMinius <200494410+NiZaMinius@users.noreply.github.com>"
+]
+repository = "https://github.com/NexGen-Zero/Entropix"
+license = "MIT OR Apache-2.0"
+keywords = ["discord", "discord-bot", "chaos", "sqlite", "gateway"]
+categories = ["asynchronous", "network-programming", "database"]
+publish = false                          # safety net: this is an app, not a library crate — blocks accidental `cargo publish`
+
+[dependencies]
+# --- Discord API layer ---
+poise = "0.6"                            # command framework on top of serenity: slash commands, ephemeral replies, error handling
+serenity = { version = "0.12", default-features = false, features = [
+    "client", "gateway", "rustls_backend", "model", "cache"
+] }                                       # low-level Discord API client and the gateway (websocket) connection
+
+# --- Async runtime ---
+tokio = { version = "1", features = ["full"] }  # required by serenity/poise; drives the whole event loop
+
+# --- Persistence ---
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio", "chrono", "migrate"] } # async SQLite driver — backs guild_settings and daily_stats
+chrono = "0.4"
+# --- Config & localization ---
+serde = { version = "1", features = ["derive"] }  # (de)serialization derive macros
+serde_json = "1"                          # reads locale files (locales/en.json, locales/ru.json) and custom_names_json
+
+# --- Environment & logging ---
+dotenvy = "0.15"                          # loads DISCORD_TOKEN and other secrets from .env
+tracing = "0.1"                           # structured logging
+tracing-subscriber = "0.3"                # log output formatting/filtering
