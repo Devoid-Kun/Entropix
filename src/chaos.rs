@@ -13,14 +13,14 @@ use std::time::Duration;
 pub const MIN_SCORE: u8 = 0;
 pub const MAX_SCORE: u8 = 100;
 
-/// Chaos stage boundaries, per spec 4.3. Only the *names* attached to each
+/// Chaos stage boundaries, per. Only the *names* attached to each
 /// stage are user-configurable (see `config::GuildConfig::custom_names`) —
 /// the numeric ranges themselves are fixed.
 pub const STAGE_1_MAX: u8 = 30; // 0-30   -> calm
 pub const STAGE_2_MAX: u8 = 70; // 31-70  -> active
                                  // 71-100 -> chaotic
 
-/// Minimum time between two channel renames, per spec 4.1. Discord itself
+/// Minimum time between two channel renames. Discord itself
 /// allows two renames per 10 minutes; 5 minutes keeps a comfortable margin
 /// so a burst of activity near a stage boundary can't trip the hard limit.
 pub const RENAME_COOLDOWN: Duration = Duration::from_secs(5 * 60);
@@ -39,6 +39,30 @@ impl Stage {
             0..=STAGE_1_MAX => Stage::Calm,
             s if s <= STAGE_2_MAX => Stage::Active,
             _ => Stage::Chaotic,
+        }
+    }
+    /// Converts a raw stage number (1/2/3), as stored in `guild_settings.current_stage`,
+    /// back into a `Stage`. Anything outside 1..=3 falls back to Chaotic defensively.
+    pub fn from_stage_number(n: u8) -> Self {
+        match n {
+            1 => Stage::Calm,
+            2 => Stage::Active,
+            _ => Stage::Chaotic,
+        }
+    }
+
+    pub fn as_u8(self) -> u8 {
+        self as u8
+    }
+
+    /// Default channel name for this stage. Edit these three
+    /// lines to change the default names — no leading "#", Discord adds
+    /// that in the UI itself.
+    pub fn default_channel_name(self) -> &'static str {
+        match self {
+            Stage::Calm => "🍵-calm",
+            Stage::Active => "⚡-active-discussion",
+            Stage::Chaotic => "💥-absolute-chaos",
         }
     }
 }
@@ -89,8 +113,8 @@ fn punctuation_spam(text: &str) -> f32 {
 /// Combines a batch of recent message signals with how fast they arrived
 /// into a single 0-100 chaos score.
 ///
-/// `signals` — every message seen in the current scoring window (spec 4.1
-/// suggests the last 3-5 minutes; the exact window is the caller's choice,
+/// `signals` — every message seen in the current scoring window (
+/// the last 3-5 minutes; the exact window is the caller's choice,
 /// enforced wherever messages are read out, not here).
 /// `messages_per_minute` — velocity over that same window, already computed
 /// by the caller so this function stays free of any notion of "now".
@@ -115,7 +139,7 @@ pub fn score(signals: &[MessageSignal], messages_per_minute: f32) -> u8 {
     raw.round().clamp(MIN_SCORE as f32, MAX_SCORE as f32) as u8
 }
 
-/// Whether the bot should actually rename the channel right now. Spec 4.1:
+/// Whether the bot should actually rename the channel right now.
 /// only rename if the cooldown has elapsed *and* the stage actually
 /// changed — a score wobbling near a boundary shouldn't rename every tick.
 pub fn should_rename(new_score: u8, current_stage: Stage, seconds_since_last_rename: i64) -> bool {
