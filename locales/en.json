@@ -1,0 +1,15 @@
+{
+  "setup_target_success": "Target channel has been set.",
+  "setup_admin_success": "Admin channel has been set.",
+  "set_language_success": "Language has been updated.",
+  "set_names_success": "Channel name for stage has been updated.",
+  "status_message": "Current chaos index: {index}",
+  "digest_title": "Daily Chaos Digest",
+  "digest_calm": "The day passed in peace and harmony.",
+  "digest_active": "It was an active day.",
+  "digest_chaotic": "Today was an absolute bloodbath.",
+  "top_chatters": "Top 3 Chatterboxes",
+  "peak_activity": "Peak Activity Hour",
+  "lurkers": "The Lurkers List",
+  "invalid_level": "Invalid level. Must be 1, 2, or 3."
+}
