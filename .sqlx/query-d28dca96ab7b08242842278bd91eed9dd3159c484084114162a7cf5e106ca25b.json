@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO daily_stats (guild_id, user_id, message_time) VALUES (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "d28dca96ab7b08242842278bd91eed9dd3159c484084114162a7cf5e106ca25b"
+}

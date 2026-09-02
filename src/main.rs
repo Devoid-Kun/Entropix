@@ -7,6 +7,7 @@
 
 use poise::serenity_prelude as serenity;
 use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
 mod chaos;
@@ -22,7 +23,7 @@ use localization::Localization;
 /// handler via `ctx.data()`.
 pub struct Data {
     pub db: sqlx::SqlitePool,
-    pub locales: Localization,
+    pub locales: Arc<Localization>,
     /// guild_id -> recent (unix_timestamp, MessageSignal) pairs, used to
     /// compute the live chaos score. Entries older than `SCORING_WINDOW_SECS`
     /// are pruned every time a new message arrives.
@@ -70,11 +71,12 @@ async fn main() {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
 
-                scheduler::start_scheduler(pool.clone()).await;
+                let locales = Arc::new(Localization::load());
+                scheduler::start_scheduler(pool.clone(), ctx.http.clone(), locales.clone()).await;
 
                 Ok(Data {
                     db: pool,
-                    locales: Localization::load(),
+                    locales,
                     message_buffers: Mutex::new(HashMap::new()),
                 })
             })

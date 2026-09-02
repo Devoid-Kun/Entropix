@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE guild_settings SET custom_names_json = ? WHERE guild_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "752c3b63fb5d5139c0bdf1b57d008dbde134616a51dfbc1aed168fb6d253cb27"
+}

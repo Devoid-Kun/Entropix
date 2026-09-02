@@ -86,12 +86,9 @@ pub async fn get_or_create(pool: &SqlitePool, guild_id: i64) -> Result<GuildConf
         return Ok(row.into());
     }
 
-    sqlx::query!(
-        "INSERT INTO guild_settings (guild_id) VALUES (?)",
-        guild_id
-    )
-    .execute(pool)
-    .await?;
+    sqlx::query!("INSERT INTO guild_settings (guild_id) VALUES (?)", guild_id)
+        .execute(pool)
+        .await?;
 
     Ok(GuildConfig {
         guild_id,
@@ -149,7 +146,7 @@ pub async fn set_language(
 
 /// Sets a custom channel name for one chaos stage (1, 2, or 3). Used by
 /// /set_names. Reads the existing JSON blob, patches one key, writes it back —
-/// simpler than a separate table for three rarely-changed values (see spec 6).
+/// simpler than a separate table for three rarely-changed values.
 pub async fn set_custom_name(
     pool: &SqlitePool,
     guild_id: i64,
@@ -173,7 +170,7 @@ pub async fn set_custom_name(
 
 /// Records that a rename just happened, at the given stage. `chaos.rs`
 /// reads `current_stage`/`last_renamed_at` back to enforce the 5-minute
-/// cooldown from spec 4.1 before allowing another rename.
+/// cooldown before allowing another rename.
 pub async fn record_rename(
     pool: &SqlitePool,
     guild_id: i64,
@@ -189,4 +186,38 @@ pub async fn record_rename(
     .execute(pool)
     .await?;
     Ok(())
+}
+
+/// One row of guild data as needed by the daily digest — a narrower view
+/// than `GuildConfig`, since the scheduler doesn't need custom_names or
+/// target_channel_id, only guilds that are fully set up to receive a digest.
+pub struct ConfiguredGuild {
+    pub guild_id: i64,
+    pub admin_channel_id: i64,
+    pub language: String,
+    pub current_stage: u8,
+}
+
+/// Every guild that has both a target and an admin channel configured —
+/// i.e. guilds ready to receive a daily digest. Used by `scheduler.rs`.
+pub async fn list_configured_guilds(
+    pool: &SqlitePool,
+) -> Result<Vec<ConfiguredGuild>, sqlx::Error> {
+    let rows = sqlx::query!(
+        r#"SELECT guild_id, admin_channel_id, language, current_stage
+           FROM guild_settings
+           WHERE target_channel_id IS NOT NULL AND admin_channel_id IS NOT NULL"#
+    )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|r| ConfiguredGuild {
+            guild_id: r.guild_id,
+            admin_channel_id: r.admin_channel_id.unwrap(), // guaranteed non-null by the WHERE clause
+            language: r.language,
+            current_stage: r.current_stage as u8,
+        })
+        .collect())
 }

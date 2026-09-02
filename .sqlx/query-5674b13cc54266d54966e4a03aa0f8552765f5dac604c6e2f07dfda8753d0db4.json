@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT message_time FROM daily_stats WHERE guild_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "message_time",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5674b13cc54266d54966e4a03aa0f8552765f5dac604c6e2f07dfda8753d0db4"
+}

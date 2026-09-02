@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT user_id, COUNT(*) as \"count!: i64\" FROM daily_stats\n           WHERE guild_id = ? GROUP BY user_id ORDER BY COUNT(*) DESC LIMIT 3",
+  "describe": {
+    "columns": [
+      {
+        "name": "user_id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "count!: i64",
+        "ordinal": 1,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "6daca45f6c7d4d03370990fe9f10d24f3577d0fa5a515477ae0354570583af2c"
+}

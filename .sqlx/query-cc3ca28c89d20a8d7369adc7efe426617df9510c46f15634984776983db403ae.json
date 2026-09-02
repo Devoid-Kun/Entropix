@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT guild_id, target_channel_id, admin_channel_id, language,\n                  custom_names_json, current_stage, last_renamed_at\n           FROM guild_settings WHERE guild_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "guild_id",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "target_channel_id",
+        "ordinal": 1,
+        "type_info": "Integer"
+      },
+      {
+        "name": "admin_channel_id",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "language",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "custom_names_json",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "current_stage",
+        "ordinal": 5,
+        "type_info": "Integer"
+      },
+      {
+        "name": "last_renamed_at",
+        "ordinal": 6,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "cc3ca28c89d20a8d7369adc7efe426617df9510c46f15634984776983db403ae"
+}
