@@ -14,6 +14,7 @@ use std::collections::HashMap;
 pub struct GuildConfig {
     pub guild_id: i64,
     pub target_channel_id: Option<i64>,
+    #[allow(dead_code)]
     pub admin_channel_id: Option<i64>,
     pub language: String,
     pub custom_names: HashMap<u8, String>, // chaos stage (1..3) -> channel name
