@@ -141,9 +141,10 @@ content, only aggregate activity metadata.
 - [x] Localization (en/ru)
 - [x] Chaos index algorithm + unit tests
 - [x] Slash command scaffolding
-- [ ] Wire commands + data into `main.rs`
-- [ ] In-memory message buffer for live scoring
-- [ ] Daily digest embed generation
+- [x] Wire commands + data into `main.rs`
+- [x] In-memory message buffer for live scoring
+- [x] Daily digest embed generation (top chatters, peak hour)
+- [ ] Lurkers list in daily digest
 - [ ] Deployment
 
 ## 🤝 Contributing
