@@ -52,11 +52,19 @@ struct GuildRow {
 
 impl From<GuildRow> for GuildConfig {
     fn from(row: GuildRow) -> Self {
-        let custom_names = row
-            .custom_names_json
-            .as_deref()
-            .and_then(|s| serde_json::from_str::<HashMap<u8, String>>(s).ok())
-            .unwrap_or_default();
+        let custom_names = match row.custom_names_json.as_deref() {
+            None => HashMap::new(),
+            Some(json_str) => serde_json::from_str::<HashMap<u8, String>>(json_str)
+                .inspect_err(|e| {
+                    tracing::error!(
+                        guild_id = row.guild_id,
+                        json = json_str,
+                        error = %e,
+                        "failed to parse custom_names_json, using empty defaults"
+                    );
+                })
+                .unwrap_or_default(),
+        };
 
         Self {
             guild_id: row.guild_id,
@@ -197,6 +205,8 @@ pub struct ConfiguredGuild {
     pub admin_channel_id: i64,
     pub language: String,
     pub current_stage: u8,
+    pub utc_offset_minutes: i32,
+    pub last_digest_at: i64,
 }
 
 /// Every guild that has both a target and an admin channel configured —
@@ -205,7 +215,8 @@ pub async fn list_configured_guilds(
     pool: &SqlitePool,
 ) -> Result<Vec<ConfiguredGuild>, sqlx::Error> {
     let rows = sqlx::query!(
-        r#"SELECT guild_id, admin_channel_id, language, current_stage
+        r#"SELECT guild_id, admin_channel_id, language, current_stage,
+                  utc_offset_minutes, last_digest_at
            FROM guild_settings
            WHERE target_channel_id IS NOT NULL AND admin_channel_id IS NOT NULL"#
     )
@@ -216,9 +227,57 @@ pub async fn list_configured_guilds(
         .into_iter()
         .map(|r| ConfiguredGuild {
             guild_id: r.guild_id,
-            admin_channel_id: r.admin_channel_id.unwrap(), // guaranteed non-null by the WHERE clause
+            admin_channel_id: r.admin_channel_id.unwrap(),
             language: r.language,
             current_stage: r.current_stage as u8,
+            utc_offset_minutes: r.utc_offset_minutes as i32,
+            last_digest_at: r.last_digest_at,
         })
         .collect())
+}
+
+/// All distinct user IDs who posted in the target channel today, for a
+/// given guild. Used to compute the "lurkers" list — everyone minus these.
+pub async fn active_user_ids_today(
+    pool: &SqlitePool,
+    guild_id: i64,
+) -> Result<std::collections::HashSet<i64>, sqlx::Error> {
+    let ids = sqlx::query_scalar!(
+        "SELECT DISTINCT user_id FROM daily_stats WHERE guild_id = ?",
+        guild_id
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(ids.into_iter().collect())
+}
+
+/// Sets a guild's UTC offset in minutes (e.g. 540 for Tokyo, -300 for New York).
+pub async fn set_utc_offset(
+    pool: &SqlitePool,
+    guild_id: i64,
+    offset_minutes: i32,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        "UPDATE guild_settings SET utc_offset_minutes = ? WHERE guild_id = ?",
+        offset_minutes,
+        guild_id
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+pub async fn record_digest_sent(
+    pool: &SqlitePool,
+    guild_id: i64,
+    timestamp: i64,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        "UPDATE guild_settings SET last_digest_at = ? WHERE guild_id = ?",
+        timestamp,
+        guild_id
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
 }
