@@ -17,3 +17,4 @@ Entropix monitors a Discord text channel, calculates a live chaos index, and dyn
 ## Project
 
 [GitHub Repository](https://github.com/Devoid-Kun/Entropix)
+—

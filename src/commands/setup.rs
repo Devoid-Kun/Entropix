@@ -18,7 +18,10 @@ pub async fn setup_target(
     config::set_target_channel(&ctx.data().db, guild_id, channel_id).await?;
 
     let guild_config = config::get_or_create(&ctx.data().db, guild_id).await?;
-    let msg = ctx.data().locales.get(&guild_config.language, "setup_target_success");
+    let msg = ctx
+        .data()
+        .locales
+        .get(&guild_config.language, "setup_target_success");
     ctx.say(msg).await?;
     Ok(())
 }
@@ -35,7 +38,10 @@ pub async fn setup_admin(
     config::set_admin_channel(&ctx.data().db, guild_id, channel_id).await?;
 
     let guild_config = config::get_or_create(&ctx.data().db, guild_id).await?;
-    let msg = ctx.data().locales.get(&guild_config.language, "setup_admin_success");
+    let msg = ctx
+        .data()
+        .locales
+        .get(&guild_config.language, "setup_admin_success");
     ctx.say(msg).await?;
     Ok(())
 }
