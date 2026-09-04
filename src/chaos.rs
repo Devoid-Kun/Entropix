@@ -18,7 +18,7 @@ pub const MAX_SCORE: u8 = 100;
 /// the numeric ranges themselves are fixed.
 pub const STAGE_1_MAX: u8 = 30; // 0-30   -> calm
 pub const STAGE_2_MAX: u8 = 70; // 31-70  -> active
-                                 // 71-100 -> chaotic
+// 71-100 -> chaotic
 
 /// Minimum time between two channel renames. Discord itself
 /// allows two renames per 10 minutes; 5 minutes keeps a comfortable margin
@@ -106,18 +106,32 @@ fn punctuation_spam(text: &str) -> f32 {
     if text.is_empty() {
         return 0.0;
     }
-    let spam_chars = text.chars().filter(|c| matches!(c, '!' | '?' | ')')).count();
+    let spam_chars = text
+        .chars()
+        .filter(|c| matches!(c, '!' | '?' | ')'))
+        .count();
     (spam_chars as f32 / text.chars().count() as f32 * 3.0).min(1.0)
 }
 
-/// Combines a batch of recent message signals with how fast they arrived
-/// into a single 0-100 chaos score.
+/// Combines a batch of recent message signals and how fast they arrived into a
+/// single 0-100 chaos score.
 ///
-/// `signals` — every message seen in the current scoring window (
-/// the last 3-5 minutes; the exact window is the caller's choice,
-/// enforced wherever messages are read out, not here).
-/// `messages_per_minute` — velocity over that same window, already computed
+/// `signals` – every message seen in the current scoring window (the last 3-5
+/// minutes; the exact window is the caller's choice, enforced wherever
+/// messages are read out, not here).
+/// `messages_per_minute` – velocity over that same window, already computed
 /// by the caller so this function stays free of any notion of "now".
+///
+/// Weights: velocity 50%, caps 30%, punctuation 20% – sum to 100 so the raw
+/// score lands in 0-100 without extra scaling.
+///
+/// Velocity dominates because sustained activity from multiple real users is
+/// hard to fake with a single message. Caps outweigh punctuation because it's
+/// a more consistent signal of excitement/frustration; punctuation spam is
+/// easier to trigger accidentally. Velocity saturates at 20 msg/min — past
+/// that, more messages don't make it feel "more chaotic" to a human reader,
+/// so extra activity stops adding to the score.
+
 pub fn score(signals: &[MessageSignal], messages_per_minute: f32) -> u8 {
     if signals.is_empty() {
         return MIN_SCORE;

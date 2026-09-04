@@ -7,7 +7,7 @@ use chrono::{DateTime, Local, Timelike, Utc};
 use poise::serenity_prelude as serenity;
 use sqlx::SqlitePool;
 use std::sync::Arc;
-use tokio::time::{Duration, Instant, interval_at};
+use tokio::time::Duration;
 
 /// Starts the daily digest scheduler. Runs in the background, firing once
 /// at the next local midnight and then every 24 hours after that.
@@ -16,66 +16,89 @@ pub async fn start_scheduler(
     http: Arc<serenity::Http>,
     locales: Arc<Localization>,
 ) {
-    let first_run = Instant::now() + duration_until_next_midnight();
-    let mut ticker = interval_at(first_run, Duration::from_secs(86400));
+    let mut ticker = tokio::time::interval(Duration::from_secs(60));
 
     tokio::spawn(async move {
         loop {
             ticker.tick().await;
-            if let Err(e) = run_digest_for_all_guilds(&pool, &http, &locales).await {
-                tracing::error!("digest run failed: {e}");
+            if let Err(e) = check_and_run_digests(&pool, &http, &locales).await {
+                tracing::error!("digest check failed: {e}");
             }
         }
     });
 }
 
-async fn run_digest_for_all_guilds(
+async fn check_and_run_digests(
     pool: &SqlitePool,
     http: &serenity::Http,
     locales: &Localization,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let now = chrono::Utc::now();
     let guilds = crate::config::list_configured_guilds(pool).await?;
 
     for guild in guilds {
-        let message_count: i64 = sqlx::query_scalar!(
-            "SELECT COUNT(*) FROM daily_stats WHERE guild_id = ?",
-            guild.guild_id
-        )
-        .fetch_one(pool)
-        .await?;
+        let local_now = now + chrono::Duration::minutes(guild.utc_offset_minutes as i64);
+        let hours_since_last_digest = (now.timestamp() - guild.last_digest_at) as f64 / 3600.0;
 
-        if message_count == 0 {
-            continue;
+        // Local midnight, and guard against firing twice for the same day
+        // if this tick happens to land on minute 0 more than once.
+        if local_now.hour() == 0 && local_now.minute() == 0 && hours_since_last_digest >= 23.0 {
+            if let Err(e) = run_digest_for_guild(pool, http, locales, &guild, now.timestamp()).await
+            {
+                tracing::error!(guild_id = guild.guild_id, "digest failed: {e}");
+            }
         }
+    }
 
+    Ok(())
+}
+
+async fn run_digest_for_guild(
+    pool: &SqlitePool,
+    http: &serenity::Http,
+    locales: &Localization,
+    guild: &crate::config::ConfiguredGuild,
+    now: i64,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let message_count: i64 = sqlx::query_scalar!(
+        "SELECT COUNT(*) FROM daily_stats WHERE guild_id = ?",
+        guild.guild_id
+    )
+    .fetch_one(pool)
+    .await?;
+
+    if message_count > 0 {
         let embed = build_digest_embed(
             pool,
+            http,
             guild.guild_id,
             &guild.language,
             guild.current_stage as i64,
             locales,
         )
         .await?;
-
         let channel_id = serenity::ChannelId::new(guild.admin_channel_id as u64);
         channel_id
             .send_message(http, serenity::CreateMessage::new().embed(embed))
             .await?;
     }
 
-    sqlx::query!("DELETE FROM daily_stats")
+    sqlx::query!("DELETE FROM daily_stats WHERE guild_id = ?", guild.guild_id)
         .execute(pool)
         .await?;
+    crate::config::record_digest_sent(pool, guild.guild_id, now).await?;
+
     Ok(())
 }
 
 async fn build_digest_embed(
     pool: &SqlitePool,
+    http: &serenity::Http,
     guild_id: i64,
     language: &str,
     current_stage: i64,
     locales: &Localization,
-) -> Result<serenity::CreateEmbed, sqlx::Error> {
+) -> Result<serenity::CreateEmbed, Box<dyn std::error::Error + Send + Sync>> {
     let top_chatters = sqlx::query!(
         r#"SELECT user_id, COUNT(*) as "count!: i64" FROM daily_stats
            WHERE guild_id = ? GROUP BY user_id ORDER BY COUNT(*) DESC LIMIT 3"#,
@@ -111,6 +134,33 @@ async fn build_digest_embed(
         _ => "digest_chaotic",
     };
 
+    let active_ids = crate::config::active_user_ids_today(pool, guild_id).await?;
+
+    // Fetching members can fail (e.g. rate limits) — degrade gracefully
+    // rather than losing the whole digest over one missing field.
+    let members = serenity::GuildId::new(guild_id as u64)
+        .members(http, None, None)
+        .await
+        .unwrap_or_default();
+
+    let lurker_mentions: Vec<String> = members
+        .iter()
+        .filter(|m| !m.user.bot && !active_ids.contains(&(m.user.id.get() as i64)))
+        .map(|m| format!("<@{}>", m.user.id))
+        .collect();
+
+    let lurkers_text = if lurker_mentions.is_empty() {
+        "—".to_string()
+    } else if lurker_mentions.len() > 20 {
+        format!(
+            "{}\n…and {} more",
+            lurker_mentions[..20].join(", "),
+            lurker_mentions.len() - 20
+        )
+    } else {
+        lurker_mentions.join(", ")
+    };
+
     Ok(serenity::CreateEmbed::new()
         .title(locales.get(language, "digest_title"))
         .description(locales.get(language, status_key))
@@ -123,7 +173,8 @@ async fn build_digest_embed(
             locales.get(language, "peak_activity"),
             format!("{peak_hour}:00"),
             false,
-        ))
+        )
+        .field(locales.get(language, "lurkers"), lurkers_text, false))
 }
 
 /// Which local hour (0-23) had the most messages, given raw unix timestamps.
@@ -141,11 +192,4 @@ fn peak_activity_hour(timestamps: &[i64]) -> u32 {
         .max_by_key(|(_, count)| **count)
         .map(|(hour, _)| hour as u32)
         .unwrap_or(0)
-}
-
-fn duration_until_next_midnight() -> Duration {
-    let now = Local::now();
-    let seconds_since_midnight =
-        now.hour() as u64 * 3600 + now.minute() as u64 * 60 + now.second() as u64;
-    Duration::from_secs(86400 - seconds_since_midnight)
 }

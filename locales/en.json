@@ -11,5 +11,6 @@
   "top_chatters": "Top 3 Chatterboxes",
   "peak_activity": "Peak Activity Hour",
   "lurkers": "The Lurkers List",
-  "invalid_level": "Invalid level. Must be 1, 2, or 3."
+  "invalid_level": "Invalid level. Must be 1, 2, or 3.",
+  "set_timezone_success": "Digest timezone has been set."
 }

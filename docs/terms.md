@@ -1,3 +1,9 @@
+---
+layout: default
+title: Terms of Service
+permalink: /terms/
+---
+
 # Terms of Service — Entropix
 
 Last updated: [08.31.2026]

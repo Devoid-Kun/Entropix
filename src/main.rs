@@ -35,7 +35,7 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 /// How far back we look when computing the live chaos score (
 /// suggests 3-5 minutes; 4 splits the difference).
-const SCORING_WINDOW_SECS: i64 = 4 * 60;
+pub const SCORING_WINDOW_SECS: i64 = 4 * 60;
 
 #[tokio::main]
 async fn main() {
@@ -60,6 +60,7 @@ async fn main() {
                 commands::set_language(),
                 commands::set_names(),
                 commands::status(),
+                commands::set_timezone(),
             ],
             event_handler: |ctx, event, framework, data| {
                 Box::pin(event_handler(ctx, event, framework, data))
