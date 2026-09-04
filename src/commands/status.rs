@@ -2,6 +2,8 @@
 //!
 //! Command to check current chaos index.
 
+use crate::SCORING_WINDOW_SECS;
+use crate::chaos;
 use crate::config;
 use crate::{Context, Error};
 
@@ -16,7 +18,16 @@ pub async fn status(ctx: Context<'_>) -> Result<(), Error> {
 
     // TODO: compute the real index from the in-memory message-signal buffer
     // once main.rs wires up the message event handler. Mocked for now.
-    let index = 42;
+    let index = {
+        let buffers = ctx.data().message_buffers.lock().await;
+        if let Some(buffer) = buffers.get(&guild_id) {
+            let signals: Vec<_> = buffer.iter().map(|(_, s)| *s).collect();
+            let velocity = signals.len() as f32 / (SCORING_WINDOW_SECS as f32 / 60.0);
+            chaos::score(&signals, velocity)
+        } else {
+            0
+        }
+    };
 
     let msg_template = ctx
         .data()
