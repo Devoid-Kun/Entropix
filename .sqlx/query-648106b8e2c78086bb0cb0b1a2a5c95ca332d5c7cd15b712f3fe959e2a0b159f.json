@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM daily_stats WHERE guild_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "648106b8e2c78086bb0cb0b1a2a5c95ca332d5c7cd15b712f3fe959e2a0b159f"
+}

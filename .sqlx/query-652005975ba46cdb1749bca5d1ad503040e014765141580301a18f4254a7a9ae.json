@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT guild_id, admin_channel_id, language, current_stage\n           FROM guild_settings\n           WHERE target_channel_id IS NOT NULL AND admin_channel_id IS NOT NULL",
+  "query": "SELECT guild_id, admin_channel_id, language, current_stage,\n                  utc_offset_minutes, last_digest_at\n           FROM guild_settings\n           WHERE target_channel_id IS NOT NULL AND admin_channel_id IS NOT NULL",
   "describe": {
     "columns": [
       {
@@ -22,6 +22,16 @@
         "name": "current_stage",
         "ordinal": 3,
         "type_info": "Integer"
+      },
+      {
+        "name": "utc_offset_minutes",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "last_digest_at",
+        "ordinal": 5,
+        "type_info": "Integer"
       }
     ],
     "parameters": {
@@ -31,8 +41,10 @@
       false,
       true,
       false,
+      false,
+      false,
       false
     ]
   },
-  "hash": "9fbfde7327df2d70dfc856c49a71667dfab77131403d586bd6cc39954371e33b"
+  "hash": "652005975ba46cdb1749bca5d1ad503040e014765141580301a18f4254a7a9ae"
 }

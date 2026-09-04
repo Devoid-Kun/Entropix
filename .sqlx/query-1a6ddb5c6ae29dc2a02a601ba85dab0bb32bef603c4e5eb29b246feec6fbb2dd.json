@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE guild_settings SET last_digest_at = ? WHERE guild_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "1a6ddb5c6ae29dc2a02a601ba85dab0bb32bef603c4e5eb29b246feec6fbb2dd"
+}
