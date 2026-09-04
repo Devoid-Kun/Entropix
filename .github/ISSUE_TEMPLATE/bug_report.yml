@@ -1,0 +1,24 @@
+name: Bug report
+description: Something isn't working the way it should
+labels: ["bug"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened
+      description: What did you expect, and what actually happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: false
+  - type: input
+    id: location
+    attributes:
+      label: Relevant file/command (if known)
+      placeholder: e.g. src/scheduler.rs, or /status
+    validations:
+      required: false
