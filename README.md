@@ -81,7 +81,9 @@ cargo install sqlx-cli --no-default-features --features sqlite
 export DATABASE_URL="sqlite://bot.db"
 sqlx database create
 sqlx migrate run
-
+```
+> *Note: this runs both migrations (0001 and 0002) automatically, in order.*
+```bash
 cargo run
 ```
 
@@ -100,6 +102,7 @@ cargo clippy --all-targets -- -D warnings
 | `/setup_admin <channel>` | Set the channel that receives the daily digest |
 | `/set_language <en\|ru>` | Switch the bot's response language |
 | `/set_names <level> <name>` | Customize the channel name for a chaos stage (1–3) |
+| `/set_timezone <offset_hours>` | Set the UTC offset (e.g. `9` or `-5`) for this server's daily digest timing |
 | `/status` | Check the current chaos index |
 
 All commands reply **ephemerally** — only the person who ran them sees the response.
@@ -118,6 +121,8 @@ All commands reply **ephemerally** — only the person who ran them sees the res
 | `custom_names_json` | TEXT | Per-stage name overrides |
 | `current_stage` | INTEGER | Last known chaos stage |
 | `last_renamed_at` | INTEGER | Unix timestamp, backs the rename cooldown |
+| `utc_offset_minutes` | INTEGER | UTC offset for this guild's local midnight, in minutes |
+| `last_digest_at` | INTEGER | Unix timestamp of the last sent digest, prevents duplicate sends |
 </details>
 
 <details>
@@ -144,7 +149,7 @@ content, only aggregate activity metadata.
 - [x] Wire commands + data into `main.rs`
 - [x] In-memory message buffer for live scoring
 - [x] Daily digest embed generation (top chatters, peak hour)
-- [ ] Lurkers list in daily digest
+- [x] Lurkers list in daily digest
 - [ ] Deployment
 
 ## 🤝 Contributing
