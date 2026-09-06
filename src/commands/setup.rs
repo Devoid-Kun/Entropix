@@ -15,9 +15,9 @@ pub async fn setup_target(
     let guild_id = ctx.guild_id().unwrap().get() as i64;
     let channel_id = channel.id().get() as i64;
 
-    config::set_target_channel(&ctx.data().db, guild_id, channel_id).await?;
-
     let guild_config = config::get_or_create(&ctx.data().db, guild_id).await?;
+
+    config::set_target_channel(&ctx.data().db, guild_id, channel_id).await?;
     let msg = ctx
         .data()
         .locales
@@ -35,9 +35,9 @@ pub async fn setup_admin(
     let guild_id = ctx.guild_id().unwrap().get() as i64;
     let channel_id = channel.id().get() as i64;
 
-    config::set_admin_channel(&ctx.data().db, guild_id, channel_id).await?;
-
     let guild_config = config::get_or_create(&ctx.data().db, guild_id).await?;
+
+    config::set_admin_channel(&ctx.data().db, guild_id, channel_id).await?;
     let msg = ctx
         .data()
         .locales

@@ -25,6 +25,7 @@ pub async fn set_language(
         return Ok(());
     }
 
+    let _ = config::get_or_create(&ctx.data().db, guild_id).await?; // ensures a row exists before the UPDATE below
     config::set_language(&ctx.data().db, guild_id, &normalized).await?;
 
     // Reply in the NEW language, not the one that was set before this call.
@@ -75,13 +76,10 @@ pub async fn set_timezone(
         return Ok(());
     }
 
+    let guild_config = config::get_or_create(&ctx.data().db, guild_id).await?;
     config::set_utc_offset(&ctx.data().db, guild_id, offset_hours * 60).await?;
 
-    let guild_config = config::get_or_create(&ctx.data().db, guild_id).await?;
-    let msg = ctx
-        .data()
-        .locales
-        .get(&guild_config.language, "set_timezone_success");
+    let msg = ctx.data().locales.get(&guild_config.language, "set_timezone_success");
     ctx.say(msg).await?;
     Ok(())
 }
