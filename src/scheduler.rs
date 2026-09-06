@@ -98,6 +98,7 @@ async fn build_digest_embed(
     language: &str,
     current_stage: i64,
     locales: &Localization,
+    utc_offset_minutes: i32,
 ) -> Result<serenity::CreateEmbed, Box<dyn std::error::Error + Send + Sync>> {
     let top_chatters = sqlx::query!(
         r#"SELECT user_id, COUNT(*) as "count!: i64" FROM daily_stats
@@ -123,7 +124,7 @@ async fn build_digest_embed(
     )
     .fetch_all(pool)
     .await?;
-    let peak_hour = peak_activity_hour(&all_times);
+    let peak_hour = peak_activity_hour(&all_times, utc_offset_minutes);
 
     // Overall day status is based on the last known chaos stage — we only
     // keep a live snapshot, not a full intraday history, so "how the day
@@ -178,12 +179,12 @@ async fn build_digest_embed(
 }
 
 /// Which local hour (0-23) had the most messages, given raw unix timestamps.
-fn peak_activity_hour(timestamps: &[i64]) -> u32 {
+fn peak_activity_hour(timestamps: &[i64], utc_offset_minutes: i32) -> u32 {
     let mut counts = [0u32; 24];
     for &ts in timestamps {
-        if let Some(dt) = DateTime::<Utc>::from_timestamp(ts, 0) {
-            let hour = dt.with_timezone(&Local).hour();
-            counts[hour as usize] += 1;
+        let shifted = ts + utc_offset_minutes as i64 * 60;
+        if let Some(dt) = DateTime::<Utc>::from_timestamp(shifted, 0) {
+            counts[dt.hour() as usize] += 1;
         }
     }
     counts
