@@ -3,7 +3,7 @@
 //! Handles daily digest generation and dispatch to each guild's admin channel.
 
 use crate::localization::Localization;
-use chrono::{DateTime, Local, Timelike, Utc};
+use chrono::{DateTime, Timelike, Utc};
 use poise::serenity_prelude as serenity;
 use sqlx::SqlitePool;
 use std::sync::Arc;
@@ -75,6 +75,7 @@ async fn run_digest_for_guild(
             &guild.language,
             guild.current_stage as i64,
             locales,
+            guild.utc_offset_minutes,
         )
         .await?;
         let channel_id = serenity::ChannelId::new(guild.admin_channel_id as u64);
@@ -91,6 +92,30 @@ async fn run_digest_for_guild(
     Ok(())
 }
 
+async fn fetch_all_members(
+    http: &serenity::Http,
+    guild_id: serenity::GuildId,
+) -> Vec<serenity::Member> {
+    let mut all = Vec::new();
+    let mut after: Option<serenity::UserId> = None;
+
+    loop {
+        let page = match guild_id.members(http, Some(1000), after).await {
+            Ok(page) => page,
+            Err(_) => break, // degrade gracefully rather than failing the whole digest
+        };
+        let page_len = page.len();
+        if let Some(last) = page.last() {
+            after = Some(last.user.id);
+        }
+        all.extend(page);
+        if page_len < 1000 {
+            break;
+        }
+    }
+    all
+}
+
 async fn build_digest_embed(
     pool: &SqlitePool,
     http: &serenity::Http,
@@ -98,6 +123,7 @@ async fn build_digest_embed(
     language: &str,
     current_stage: i64,
     locales: &Localization,
+    utc_offset_minutes: i32,
 ) -> Result<serenity::CreateEmbed, Box<dyn std::error::Error + Send + Sync>> {
     let top_chatters = sqlx::query!(
         r#"SELECT user_id, COUNT(*) as "count!: i64" FROM daily_stats
@@ -123,7 +149,7 @@ async fn build_digest_embed(
     )
     .fetch_all(pool)
     .await?;
-    let peak_hour = peak_activity_hour(&all_times);
+    let peak_hour = peak_activity_hour(&all_times, utc_offset_minutes);
 
     // Overall day status is based on the last known chaos stage — we only
     // keep a live snapshot, not a full intraday history, so "how the day
@@ -138,10 +164,7 @@ async fn build_digest_embed(
 
     // Fetching members can fail (e.g. rate limits) — degrade gracefully
     // rather than losing the whole digest over one missing field.
-    let members = serenity::GuildId::new(guild_id as u64)
-        .members(http, None, None)
-        .await
-        .unwrap_or_default();
+    let members = fetch_all_members(http, serenity::GuildId::new(guild_id as u64)).await;
 
     let lurker_mentions: Vec<String> = members
         .iter()
@@ -178,12 +201,12 @@ async fn build_digest_embed(
 }
 
 /// Which local hour (0-23) had the most messages, given raw unix timestamps.
-fn peak_activity_hour(timestamps: &[i64]) -> u32 {
+fn peak_activity_hour(timestamps: &[i64], utc_offset_minutes: i32) -> u32 {
     let mut counts = [0u32; 24];
     for &ts in timestamps {
-        if let Some(dt) = DateTime::<Utc>::from_timestamp(ts, 0) {
-            let hour = dt.with_timezone(&Local).hour();
-            counts[hour as usize] += 1;
+        let shifted = ts + utc_offset_minutes as i64 * 60;
+        if let Some(dt) = DateTime::<Utc>::from_timestamp(shifted, 0) {
+            counts[dt.hour() as usize] += 1;
         }
     }
     counts

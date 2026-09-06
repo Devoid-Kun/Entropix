@@ -16,12 +16,15 @@ pub async fn status(ctx: Context<'_>) -> Result<(), Error> {
         .get() as i64;
     let guild_config = config::get_or_create(&ctx.data().db, guild_id).await?;
 
-    // TODO: compute the real index from the in-memory message-signal buffer
-    // once main.rs wires up the message event handler. Mocked for now.
     let index = {
         let buffers = ctx.data().message_buffers.lock().await;
         if let Some(buffer) = buffers.get(&guild_id) {
-            let signals: Vec<_> = buffer.iter().map(|(_, s)| *s).collect();
+            let now = chrono::Utc::now().timestamp();
+            let signals: Vec<_> = buffer
+                .iter()
+                .filter(|(ts, _)| now - ts <= crate::SCORING_WINDOW_SECS)
+                .map(|(_, s)| *s)
+                .collect();
             let velocity = signals.len() as f32 / (SCORING_WINDOW_SECS as f32 / 60.0);
             chaos::score(&signals, velocity)
         } else {
