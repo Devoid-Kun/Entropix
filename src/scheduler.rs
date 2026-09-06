@@ -91,6 +91,30 @@ async fn run_digest_for_guild(
     Ok(())
 }
 
+async fn fetch_all_members(
+    http: &serenity::Http,
+    guild_id: serenity::GuildId,
+) -> Vec<serenity::Member> {
+    let mut all = Vec::new();
+    let mut after: Option<serenity::UserId> = None;
+
+    loop {
+        let page = match guild_id.members(http, Some(1000), after).await {
+            Ok(page) => page,
+            Err(_) => break, // degrade gracefully rather than failing the whole digest
+        };
+        let page_len = page.len();
+        if let Some(last) = page.last() {
+            after = Some(last.user.id);
+        }
+        all.extend(page);
+        if page_len < 1000 {
+            break;
+        }
+    }
+    all
+}
+
 async fn build_digest_embed(
     pool: &SqlitePool,
     http: &serenity::Http,
@@ -139,10 +163,7 @@ async fn build_digest_embed(
 
     // Fetching members can fail (e.g. rate limits) — degrade gracefully
     // rather than losing the whole digest over one missing field.
-    let members = serenity::GuildId::new(guild_id as u64)
-        .members(http, None, None)
-        .await
-        .unwrap_or_default();
+    let members = fetch_all_members(http, serenity::GuildId::new(guild_id as u64)).await;
 
     let lurker_mentions: Vec<String> = members
         .iter()
