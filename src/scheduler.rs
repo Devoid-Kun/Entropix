@@ -3,7 +3,7 @@
 //! Handles daily digest generation and dispatch to each guild's admin channel.
 
 use crate::localization::Localization;
-use chrono::{DateTime, Local, Timelike, Utc};
+use chrono::{DateTime, Timelike, Utc};
 use poise::serenity_prelude as serenity;
 use sqlx::SqlitePool;
 use std::sync::Arc;
@@ -75,6 +75,7 @@ async fn run_digest_for_guild(
             &guild.language,
             guild.current_stage as i64,
             locales,
+            guild.utc_offset_minutes,
         )
         .await?;
         let channel_id = serenity::ChannelId::new(guild.admin_channel_id as u64);
