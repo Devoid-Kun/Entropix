@@ -1,0 +1,35 @@
+name: Build release binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: entropix.exe
+            asset_name: entropix-windows.exe
+          - os: ubuntu-latest
+            artifact: entropix
+            asset_name: entropix-linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build --release
+        env:
+          SQLX_OFFLINE: true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: target/release/${{ matrix.artifact }}
