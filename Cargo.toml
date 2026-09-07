@@ -34,3 +34,7 @@ serde_json = "1"                          # reads locale files (locales/en.json,
 dotenvy = "0.15"                          # loads DISCORD_TOKEN and other secrets from .env
 tracing = "0.1"                           # structured logging
 tracing-subscriber = "0.3"                # log output formatting/filtering
+
+[profile.release]
+strip = true       # remove debug-symbols from binary-file
+lto = true         # link-time optimization
