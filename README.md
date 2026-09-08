@@ -9,6 +9,7 @@
   <img alt="License" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg">
   <img alt="Rust" src="https://img.shields.io/badge/rust-2024-orange.svg">
   <img alt="Status" src="https://img.shields.io/badge/status-pre--deploy-yellow.svg">
+  <img alt="Release Build" src="https://github.com/Devoid-Kun/Entropix/actions/workflows/build.yml/badge.svg">
 </p>
 
 ---
@@ -24,6 +25,8 @@ most, when things peaked, and who stayed silent.
 - [Features](#-features)
 - [Tech stack](#-tech-stack)
 - [Getting started](#-getting-started)
+- [Configuration](#-configuration)
+- [Discord permissions](#-discord-permissions)
 - [Commands](#-commands)
 - [Database schema](#-database-schema)
 - [Project status](#-project-status)
@@ -73,26 +76,65 @@ Names are fully customizable per server via `/set_names`.
 ```bash
 git clone https://github.com/Devoid-Kun/Entropix.git
 cd Entropix
-
 cp .env.example .env
-# then edit .env and paste your DISCORD_TOKEN
+cargo run
+```
+>[!NOTE]
+>*On first startup, Entropix automatically creates bot.db and applies all
+pending migrations.*
 
+### Database development
+
+```bash
 cargo install sqlx-cli --no-default-features --features sqlite
 export DATABASE_URL="sqlite://bot.db"
+
 sqlx database create
 sqlx migrate run
 ```
-> *Note: this runs both migrations (0001 and 0002) automatically, in order.*
-```bash
-cargo run
-```
+>[!NOTE]
+>*DATABASE_URL is used by SQLx CLI to select the local database.*
 
-Run the test suite and linter before pushing:
+### Run the test suite and linter before pushing:
 
 ```bash
 cargo test
 cargo clippy --all-targets -- -D warnings
 ```
+
+## ⚙️ Configuration
+
+Entropix currently requires the following environment variable:
+
+| Variable | Required | Description |
+|---|---|---|
+| `DISCORD_TOKEN` | Yes | Discord bot token |
+
+The SQLite database is automatically created locally as `bot.db` if it does not already exist.
+
+## 🔐 Discord permissions
+
+Entropix requires the following Discord permissions:
+
+- View Channels
+- Send Messages
+- Embed Links
+- Manage Channels
+
+The bot needs `Manage Channels` to rename the monitored channel and
+`Send Messages` + `Embed Links` to deliver daily digests.
+
+### Required intents
+
+The following Gateway Intents must be enabled for the bot:
+
+- `GUILD_MESSAGES`
+- `MESSAGE_CONTENT`
+- `GUILD_MEMBERS`
+- `GUILDS`
+
+`MESSAGE_CONTENT` and `GUILD_MEMBERS` are privileged intents and must be
+enabled in the Discord Developer Portal.
 
 ## 🎮 Commands
 
