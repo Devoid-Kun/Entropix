@@ -95,6 +95,16 @@ cargo test
 cargo clippy --all-targets -- -D warnings
 ```
 
+## ⚙️ Configuration
+
+Entropix currently requires the following environment variable:
+
+| Variable | Required | Description |
+|---|---|---|
+| `DISCORD_TOKEN` | Yes | Discord bot token |
+
+The SQLite database is automatically created locally as `bot.db` if it does not already exist.
+
 ## 🔐 Discord permissions
 
 Entropix requires the following Discord permissions:
