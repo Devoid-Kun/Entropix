@@ -95,6 +95,31 @@ cargo test
 cargo clippy --all-targets -- -D warnings
 ```
 
+## 🔐 Discord permissions
+
+Entropix requires the following Discord permissions:
+
+- View Channels
+- Send Messages
+- Embed Links
+- Read Message History
+- Manage Channels
+
+The bot needs `Manage Channels` to rename the monitored channel and
+`Send Messages` + `Embed Links` to deliver daily digests.
+
+### Required intents
+
+The following Gateway Intents must be enabled for the bot:
+
+- `GUILD_MESSAGES`
+- `MESSAGE_CONTENT`
+- `GUILD_MEMBERS`
+- `GUILDS`
+
+`MESSAGE_CONTENT` and `GUILD_MEMBERS` are privileged intents and must be
+enabled in the Discord Developer Portal.
+
 ## 🎮 Commands
 
 | Command | Description |
