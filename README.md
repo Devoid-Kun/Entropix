@@ -114,7 +114,6 @@ Entropix requires the following Discord permissions:
 - View Channels
 - Send Messages
 - Embed Links
-- Read Message History
 - Manage Channels
 
 The bot needs `Manage Channels` to rename the monitored channel and
