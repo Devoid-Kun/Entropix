@@ -9,6 +9,7 @@
   <img alt="License" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg">
   <img alt="Rust" src="https://img.shields.io/badge/rust-2024-orange.svg">
   <img alt="Status" src="https://img.shields.io/badge/status-pre--deploy-yellow.svg">
+  <img alt="CI" src="https://github.com/Devoid-Kun/Entropix/actions/workflows/build.yml/badge.svg">
 </p>
 
 ---
