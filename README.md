@@ -76,21 +76,26 @@ Names are fully customizable per server via `/set_names`.
 ```bash
 git clone https://github.com/Devoid-Kun/Entropix.git
 cd Entropix
-
 cp .env.example .env
-# then edit .env and paste your DISCORD_TOKEN
+cargo run
+```
+>[!NOTE]
+>*On first startup, Entropix automatically creates bot.db and applies all
+pending migrations.*
 
+### Database development
+
+```bash
 cargo install sqlx-cli --no-default-features --features sqlite
 export DATABASE_URL="sqlite://bot.db"
+
 sqlx database create
 sqlx migrate run
 ```
-> *Note: this runs both migrations (0001 and 0002) automatically, in order.*
-```bash
-cargo run
-```
+>[!NOTE]
+>*DATABASE_URL is used by SQLx CLI to select the local database.*
 
-Run the test suite and linter before pushing:
+### Run the test suite and linter before pushing:
 
 ```bash
 cargo test
