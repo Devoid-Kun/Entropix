@@ -38,3 +38,5 @@ tracing-subscriber = "0.3"                # log output formatting/filtering
 [profile.release]
 strip = true       # remove debug-symbols from binary-file
 lto = true         # link-time optimization
+codegen-units = 1  # It compiles slower, but the output code is slightly more optimized
+panic = "abort"    # Without unwinding, the binary is slightly smaller and panic paths are slightly faster.
