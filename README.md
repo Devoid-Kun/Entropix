@@ -25,6 +25,8 @@ most, when things peaked, and who stayed silent.
 - [Features](#-features)
 - [Tech stack](#-tech-stack)
 - [Getting started](#-getting-started)
+- [Configuration](#-configuration)
+- [Discord permissions](#-discord-permissions)
 - [Commands](#-commands)
 - [Database schema](#-database-schema)
 - [Project status](#-project-status)
